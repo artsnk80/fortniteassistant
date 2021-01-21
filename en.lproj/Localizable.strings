@@ -1,0 +1,43 @@
+/* 
+  Localizable.strings
+  fortniteassistant
+
+  Created by AG on 21.01.2021.
+  
+*/
+"item_name_perkup"="Улучшарий";
+"item_name_reperk"="Заменярий";
+"item_name_shortgun"="Дробовик";
+"item_name_personnelxp"="XP для выживших";
+"item_name_floor_flamegrill"="Ловушка: напольная жаровня";
+"item_name__schematicxp"="XP для чертежей";
+"item_name_reagent"="Реагент";
+"item_name_sniper"="Снайперская винтовка";
+"item_name_heroxp"="XP для героев";
+"item_name_campaign_event_currency"="Event ticket";
+"item_name_vbucks"="V-Bucks";
+"item_name_unknown"="предмет";
+"item_name_mini_reward_liama"="Мини Лама";
+"item_name_trap"="Ловушка";
+"item_name_assault_semiauto"="Штурмовая винтовка";
+"item_name_scythe"="Коса";
+"item_name_pistol"="Пистолет";
+"item_name_spear"="Копье";
+"item_name_tool"="Дробящий инструмент";
+"item_name_sword"="Меч";
+"item_name_worker"="Выживший";
+"item_name_hero"="Герой";
+"item_name_defender"="Защитник";
+"item_name_floor_health"="Медпункт";
+"item_name_club"="Дубина";
+"item_name_assault_lmg"="Пулемёт";
+"item_name_ranged_assault"="Автомат";
+"item_name_wall_electric"="Ловушка: настенный генератор";
+"item_name_floor_spikes"="Ловушка: напольные копья";
+"item_name_axe"="Топор";
+"item_name_ceiling_electric"="Ловушка: потолочный генератор";
+"item_name_assault_burst"="Штурмовое оружие колючка";
+"item_name_reagent_c_t01"="Капли дождя";
+"item_name_reagent_c_t02"="Молния в бутылке";
+"item_name_reagent_c_t03"="Глаз бури";
+"item_name_reagent_c_t04"="Осколок бури";
