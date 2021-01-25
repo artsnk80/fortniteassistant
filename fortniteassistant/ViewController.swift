@@ -14,6 +14,13 @@ class tableViewCell: UITableViewCell {
     @IBOutlet weak var imagePower: UIImageView!
 }
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+    @IBOutlet weak var label1: UILabel!
+    @IBOutlet weak var label2: UILabel!
+    @IBOutlet weak var label3: UILabel!
+    @IBOutlet weak var label4: UILabel!
+    @IBOutlet weak var labelSum: UILabel!
+    @IBOutlet weak var navigationTitle: UINavigationItem!
+    @IBOutlet weak var navigationBar: UINavigationBar!
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
     let serverIP: String = "http://fa.z0p.ru:8080/api/v1/missions"
@@ -49,12 +56,29 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         var item: Item = Item()
      }
 
+    var expire: CLong?
     var zones = [
         [MissionFlat](),  // Камнелесье
         [MissionFlat](),  // Планкертон
         [MissionFlat](),  // Вещая долина
         [MissionFlat]()   // Линч Пикс
     ]
+    var vbucksSum = [Int](arrayLiteral: 0,0,0,0)
+    
+    func UIColorFromRGB(rgbValue: UInt) -> UIColor {
+        return UIColor(
+            red: CGFloat((rgbValue & 0xFF0000) >> 16) / 255.0,
+            green: CGFloat((rgbValue & 0x00FF00) >> 8) / 255.0,
+            blue: CGFloat(rgbValue & 0x0000FF) / 255.0,
+            alpha: CGFloat(1.0)
+        )
+    }
+    var rareVal:[UInt] = [0x5C6BC0,// "rareItem"
+                          0x50276b,// "epicItem"
+                          0x388E3C,// "uncommonItem"
+                          0xFB8C00]// "legendaryItem"
+
+ // powerId начинается с 1
     var powerVal: [Int] = [1,3,5,9,15,19,23,28,34,40,46,52,58,64,70,76,82,88,94,100,108,116,124,132,140,160]
   // itemId начинается с 1
     var itemName: [String] = ["item_name_personnelxp","item_name_shortgun","item_name_floor_flamegrill","item_name__schematicxp","item_name_reagent","item_name_sniper","item_name_heroxp","item_name_campaign_event_currency","item_name_vbucks","item_name_mini_reward_liama","item_name_trap","item_name_assault_semiauto","item_name_scythe","item_name_pistol","item_name_spear","item_name_tool","item_name_sword","item_name_worker","item_name_hero","item_name_defender","item_name_floor_health","item_name_club","item_name_assault_lmg","item_name_ranged_assault","item_name_wall_electric","item_name_floor_spikes","item_name_axe","item_name_ceiling_electric","item_name_assault_burst","item_name_reagent_c_t01","item_name_reagent_c_t02","item_name_reagent_c_t03","item_name_reagent_c_t04","item_name_unknown"]
@@ -80,10 +104,26 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tableView.delegate = self
   //      tableView.sectionHeaderHeight = 50
   //      tableView.register(tableViewCell.self, forCellReuseIdentifier: "myCell")
-
+        let leftBar = UIBarButtonItem(title: "Обновить", style: .plain, target: self, action: #selector(touchUpInside))
+        // magnifyingglass
+        leftBar.image = UIImage(systemName: "arrow.triangle.2.circlepath",withConfiguration: UIImage.SymbolConfiguration(scale: .large))
+        navigationTitle.leftBarButtonItem = leftBar
+        titleLabel.text = NSLocalizedString("element_vbucks_header", comment: "")
+        _ = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(onTimer), userInfo: nil, repeats: true)
         setTitle(newTitle: "dfff")
     }
+    
+    @objc func onTimer() {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        if let expire = expire {
+        let date = Date(timeIntervalSince1970: TimeInterval(expire) / 1000)
+        let dateSinceNow = Date(timeIntervalSinceReferenceDate: date.timeIntervalSinceNow)
 
+            setTitle(newTitle: NSLocalizedString("element_countdown_text",comment: "") + "\n\(f.string(from: dateSinceNow))")
+        }
+        }
+    
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
 print("section \(section)")
 let label = UILabel()
@@ -111,6 +151,7 @@ let label = UILabel()
         let m = self.zones[indexPath.section][indexPath.row]
    //     cell.textLabel?.numberOfLines = 2
         cell.labelCell?.text = "\(getItemName(item: m.item)) (x\(m.item.quantity))"
+//        cell.column1.text
         var s: String
         switch m.typeId {
         case 100: s = "retrieve_the_data_96"
@@ -144,7 +185,10 @@ let label = UILabel()
             let image = UIImage(named: "power_96")?.withRenderingMode(.alwaysOriginal)
             cell.imagePower?.image = image
         }
-
+        if m.item.rarId>0,
+           m.item.rarId<=4 {
+            cell.backgroundColor = UIColorFromRGB(rgbValue: rareVal[m.item.rarId])
+        }
       return cell
     }
 
@@ -159,14 +203,17 @@ let label = UILabel()
             label.text = newTitle
             label.sizeToFit()
             label.adjustsFontSizeToFitWidth = true
-            self.navigationItem.titleView = label
+        self.navigationTitle.titleView = label
         }
 
     @IBAction func touchUpInside(_ sender: Any) {
-        zones[0].removeAll()
-        zones[1].removeAll()
-        zones[2].removeAll()
-        zones[3].removeAll()
+        for i in 0..<zones.count{
+            zones[i].removeAll()
+        }
+        for i in 0..<vbucksSum.count {
+            vbucksSum[i] = 0
+        }
+
         let req = NSMutableURLRequest(url: NSURL(string:serverIP)! as URL)
 //        req.httpMethod="GET"
         req.timeoutInterval = 5000.0
@@ -188,14 +235,10 @@ let label = UILabel()
                return
             }
  //print ("got data: \(String(describing: String(data: data!, encoding: .utf8)))")
-            var dateSinceNow: Date?
             var mTmp: MissionFlat! = MissionFlat()
             do {
             let decoder = JSONDecoder()
             let mi = try decoder.decode(PveMissionsInfo.self, from: data!)
-            print(mi.expire)
-            let date = Date(timeIntervalSince1970: TimeInterval(mi.expire) / 1000)
-            dateSinceNow = Date(timeIntervalSinceReferenceDate: date.timeIntervalSinceNow)
             for m in mi.missions {
                 mTmp.categoryId = m.categoryId
   //              mTmp.location = m.location
@@ -211,15 +254,22 @@ let label = UILabel()
                     
                     DispatchQueue.main.async{
                         if m.location >= 0,m.location < self.zones.count {
-                        self.zones[m.location].append(mTmp)}
+                        self.zones[m.location].append(mTmp)
+                            if mTmp.item.nameId == 9 {   // V-Bucks
+                                self.vbucksSum[m.location] += mTmp.item.quantity
+                            }
+                        }
              }
             }
             }
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
-        DispatchQueue.main.async {
-           self.tableView.reloadData()
-            self.titleLabel.text = "new missions after: \(f.string(from: dateSinceNow!))"
+        DispatchQueue.main.async { [self] in
+            expire = mi.expire
+            tableView.reloadData()
+            label1.text = NSLocalizedString("abb_caps_sw", comment: "") + "\n\(vbucksSum[0])"
+            label2.text = NSLocalizedString("abb_caps_pt", comment: "") + "\n\(vbucksSum[1])"
+            label3.text = NSLocalizedString("abb_caps_cv", comment: "") + "\n\(vbucksSum[2])"
+            label4.text = NSLocalizedString("abb_caps_tp", comment: "") + "\n\(vbucksSum[3])"
+            labelSum.text = NSLocalizedString("element_vbucks_total", comment: "") + "\n\(vbucksSum[0]+vbucksSum[1]+vbucksSum[2]+vbucksSum[3])"
         }
             } catch {
                     print(error.localizedDescription)

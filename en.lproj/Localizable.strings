@@ -7,6 +7,7 @@
 */
 "item_name_perkup"="Улучшарий";
 "item_name_reperk"="Заменярий";
+
 "item_name_shortgun"="Дробовик";
 "item_name_personnelxp"="XP для выживших";
 "item_name_floor_flamegrill"="Ловушка: напольная жаровня";
@@ -41,3 +42,14 @@
 "item_name_reagent_c_t02"="Молния в бутылке";
 "item_name_reagent_c_t03"="Глаз бури";
 "item_name_reagent_c_t04"="Осколок бури";
+
+"abb_caps_sw"="КЛ";
+"abb_caps_pt"="ПТ";
+"abb_caps_cv"="ВД";
+"abb_caps_tp"="ЛП";
+"element_vbucks_total"="Всего";
+
+"element_vbucks_header"="V-Bucks";
+"element_countdown_text"="Новые миссии через:";
+
+
