@@ -83,8 +83,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
  //       [MissionFlat]()   // Линч Пикс
     ]
     var vbucksSum = [Int](arrayLiteral: 0,0,0,0)
-    var filterZones = [Bool](arrayLiteral: true,true,true,true)
-    var filterCategories = [Bool](arrayLiteral: true,true,true,true)
+    struct stfilters : Codable {
+        var filterZones = [Bool](arrayLiteral: true,true,true,true)
+        var filterCategories = [Bool](arrayLiteral: true,true,true,true)
+        var Single : Bool = true
+        var Group : Bool = true
+        var VBucks : Bool = false
+        var Perkup : Bool = false
+        var Epic : Bool = true
+        var Legendary : Bool = true
+    }
+    var filters = stfilters()
+    let vBucksId = 9
     let zonesNames = [String](arrayLiteral: "Камнелесье","Планкертон","Вещая Долина","Линч Пикс")
     func UIColorFromRGB(rgbValue: UInt) -> UIColor {
         return UIColor(
@@ -95,8 +105,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         )
     }
     var rareVal:[UInt] = [0x5C6BC0,// "rareItem"
-                          0x50276b,// "epicItem"
                           0x388E3C,// "uncommonItem"
+                          0x50276b,// "epicItem"
                           0xFB8C00]// "legendaryItem"
     let button = UIButton(frame: CGRect(x: 150, y: 550, width: 75, height: 75))
 
@@ -158,6 +168,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         view.addGestureRecognizer(downSwipe)
         view.addGestureRecognizer(upSwipe)
 
+        LoadFilters()
     }
     
     @objc func handleSwipes(_ sender:UISwipeGestureRecognizer) {
@@ -165,6 +176,24 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if  viewFilter.isHidden == false {
             viewFilter.isHidden = true
             btn.isHidden = false
+ 
+            filters.filterZones[0] = switchZone0.isOn
+            filters.filterZones[1] = switchZone1.isOn
+            filters.filterZones[2] = switchZone2.isOn
+            filters.filterZones[3] = switchZone3.isOn
+           
+            filters.filterCategories[0] = switchCategory0.isOn
+            filters.filterCategories[1] = switchCategory1.isOn
+            filters.filterCategories[2] = switchCategory2.isOn
+            filters.filterCategories[3] = switchCategory3.isOn
+            filters.Single = switchSingle.isOn
+            filters.Group = switchGroup.isOn
+            filters.VBucks = switchVBucks.isOn
+            filters.Perkup = switchPerkup.isOn
+            filters.Epic = switchEpic.isOn
+            filters.Legendary = switchLegendary.isOn
+            SaveFilters()
+
         }
     }
     @objc func onFilter() {
@@ -274,15 +303,77 @@ let label = UILabel()
         self.navigationTitle.titleView = label
         }
     
+    @objc func SaveFilters() {
+        print(filters)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try! encoder.encode(filters)
+        let text = String(data: data, encoding: .utf8)!
+
+        let file = "config.txt" //this is the file. we will write to and read from it
+
+    if let dir = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor:nil, create: true) {
+        
+        let fileURL = dir.appendingPathComponent(file)
+
+        //writing
+        do {
+            try text.write(to: fileURL, atomically: false, encoding: .utf8)
+        }
+        catch {                print(error.localizedDescription)}
+
+        //reading
+        do {
+            let text2 = try String(contentsOf: fileURL, encoding: .utf8)
+            print(text2)
+        }
+        catch {
+            print(error.localizedDescription)}
+    }
+    }
+    
+    @objc func LoadFilters() {
+    let file = "config.txt" //this is the file. we will write to and read from it
+        var text: String!
+    if let dir = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor:nil, create: true) {
+        
+        let fileURL = dir.appendingPathComponent(file)
+        //reading
+        do {
+            text = try String(contentsOf: fileURL, encoding: .utf8)
+            print(text!)
+        }
+        catch {
+            print(error.localizedDescription)}
+    }
+        if text != ""   {
+        let decoder = JSONDecoder()
+        guard let filt = try? decoder.decode(stfilters.self, from: text.data(using: .utf8)!)
+        else { return }
+        filters=filt
+    }
+        switchZone0.isOn = filters.filterZones[0]
+        switchZone1.isOn = filters.filterZones[1]
+        switchZone2.isOn = filters.filterZones[2]
+        switchZone3.isOn = filters.filterZones[3]
+
+        switchCategory0.isOn = filters.filterCategories[0]
+        switchCategory1.isOn = filters.filterCategories[1]
+        switchCategory2.isOn = filters.filterCategories[2]
+        switchCategory3.isOn = filters.filterCategories[3]
+        
+        switchSingle.isOn = filters.Single
+        switchGroup.isOn = filters.Group
+        
+        switchVBucks.isOn = filters.VBucks
+        switchPerkup.isOn = filters.Perkup
+        
+        switchEpic.isOn = filters.Epic
+        switchLegendary.isOn = filters.Legendary
+    }
+
     @objc func showJson(data: Data) {
-        filterZones[0] = switchZone0.isOn
-        filterZones[1] = switchZone1.isOn
-        filterZones[2] = switchZone2.isOn
-        filterZones[3] = switchZone3.isOn
-        filterCategories[0] = switchCategory0.isOn
-        filterCategories[1] = switchCategory1.isOn
-        filterCategories[2] = switchCategory2.isOn
-        filterCategories[3] = switchCategory3.isOn
+        
         zones.removeAll()
         zones.append([MissionFlat]())
         zones.append([MissionFlat]())
@@ -292,9 +383,11 @@ let label = UILabel()
         for i in 0..<vbucksSum.count {
             vbucksSum[i] = 0
         }
-        let filterSingle = switchSingle.isOn
-        let filterGroup = switchGroup.isOn
-        let filterVBucks = switchVBucks.isOn
+//        let filterSingle = switchSingle.isOn
+//        let filterGroup = switchGroup.isOn
+//        let filterVBucks = switchVBucks.isOn
+//        let filterPerkup = switchPerkup.isOn
+        
         var mTmp: MissionFlat! = MissionFlat()
         do {
         let decoder = JSONDecoder()
@@ -312,20 +405,25 @@ let label = UILabel()
                     if mTmp.categoryId < 0 {
                         filterCategory = true
                     } else
-                    if (mTmp.categoryId < self.filterCategories.count) {
-                        filterCategory = self.filterCategories[mTmp.categoryId]
+                    if (mTmp.categoryId < self.filters.filterCategories.count) {
+                        filterCategory = self.filters.filterCategories[mTmp.categoryId]
                     }
                 if filterCategory,
-                   (filterSingle && m.group == false) ||
-                    (filterGroup && m.group == true),
+                   (self.filters.Single && m.group == false) ||
+                   (self.filters.Group && m.group == true),
                   m.location >= 0,
                   m.location < self.zones.count,
-                  self.filterZones[m.location]{
+                  self.filters.filterZones[m.location],
+                  (!filters.VBucks || (filters.VBucks && mTmp.item.nameId == vBucksId)),
+                  (!filters.Perkup || (filters.Perkup && mTmp.item.perkup)),
+                  (!filters.Epic || (filters.Epic && mTmp.item.rarId == 3)),
+                  (!filters.Legendary || (filters.Legendary && mTmp.item.rarId == 4))
+                  {
                     print(m.location)
-                       print(mTmp!)
+                    print(mTmp!)
                        mTmp.locationName = self.zonesNames[m.location]
                         self.zones[m.location].append(mTmp)
-                       if mTmp.item.nameId == 9 {   // V-Bucks
+                       if mTmp.item.nameId == vBucksId {   // V-Bucks
                             self.vbucksSum[m.location] += mTmp.item.quantity
                        }
                 }}
@@ -383,3 +481,45 @@ let label = UILabel()
 
 
 
+/*      площадь коридора 172х102 = 1.7 м2
+        площадь комната 307х647 = 19.8 м2
+        площадь кухни и ванной 531х417 = 22.1 м2
+        итого 43.6 м2 без балкона
+        балкон 2,5 м2
+        балкон без стен 2,52х1,45 = 3,6 м2
+        итого 47,2 м2
+        высота до потолка 3.24
+        порог двери 9
+        трубы отопления 3.5
+        коридор ширина 172
+        коридор глубина 102
+        полотно двери 89
+        высота двери 210
+        проем двери 102
+        справа от двери 15
+        слева от двери 60
+        комната длина до окна 647 от выступа коридора
+        комната ширина 307 от кондиционера
+        кондиционер 117 от окна
+        окно от пола 63
+        окно справа от стены 40
+        окно слева от кондиционера 39
+        ширина окна 228
+        высота окна 223
+        кухня 417 до правого края кондиционера
+        стена балкона справа от двери 184
+        стена балкона слева от двера 130
+        ширина двери балкона 105
+        высота двери балкона 287
+        ванна 215 к окну
+        кухня 316 к окну
+        от края коридора до угла ванной 554
+        левый ригель балкона 28 к окну, 21 влево
+        толщина стены балкона 45
+        ширина балкона 252
+        глубина балкона 100
+        высота кирпичной кладки 65
+        ширина окна балкона 220
+        высота окна балкона 226
+        стояк 130 от левого угла стены
+ */
